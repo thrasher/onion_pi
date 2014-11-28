@@ -8,11 +8,11 @@
 # * Further testing
 
 if (( $EUID != 0 )); then
-  /bin/echo "This script must be run as root. Type in 'sudo $0' to run it as root."
+  echo "This script must be run as root. Type in 'sudo $0' to run it as root."
   exit 1
 fi
 
-/bin/cat <<'Onion_Pi'
+cat <<'Onion_Pi'
                             ~
                            /~
                      \  \ /**
@@ -40,25 +40,25 @@ fi
                   /  /    \
 Onion_Pi
 
-/bin/echo "This script will auto-setup a Tor proxy for you. It is recommend that you
+echo "This script will auto-setup a Tor proxy for you. It is recommend that you
 run this script on a fresh installation of Raspbian."
 read -p "Press [Enter] key to begin.."
 
-/bin/echo "Updating package index.."
-/usr/bin/apt-get update -y
+echo "Updating package index.."
+apt-get update -y
 
-/bin/echo "Removing Wolfram Alpha Enginer due to bug. More info:
+echo "Removing Wolfram Alpha Enginer due to bug. More info:
 http://www.raspberrypi.org/phpBB3/viewtopic.php?f=66&t=68263"
-/usr/bin/apt-get remove -y wolfram-engine
+apt-get remove -y wolfram-engine
 
-/bin/echo "Updating out-of-date packages.."
-/usr/bin/apt-get upgrade -y
+echo "Updating out-of-date packages.."
+apt-get upgrade -y
 
-/bin/echo "Downloading and installing various packages.."
-/usr/bin/apt-get install -y ntp unattended-upgrades monit tor 
+echo "Downloading and installing various packages.."
+apt-get install -y ntp unattended-upgrades monit tor 
 
-/bin/echo "Configuring Tor.."
-/bin/cat /dev/null > /etc/tor/torrc
+echo "Configuring Tor.."
+cat /dev/null > /etc/tor/torrc
 /etc/tor/torrc <<'onion_pi_configuration'
 ## Onion Pi Config v0.3
 ## More information: https://github.com/breadtk/onion_pi/
@@ -85,32 +85,32 @@ AutomapHostsOnResolve 1
 DNSPort 53
 onion_pi_configuration
 
-/bin/echo "Fixing firewall configuration.."
-/sbin/iptables -F
-/sbin/iptables -t nat -F
-/sbin/iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j REDIRECT --to-ports 53 -m comment --comment "OnionPi: Redirect all DNS requests to Tor's DNSPort port."
-/sbin/iptables -t nat -A PREROUTING -i wlan0 -p tcp --syn -j REDIRECT --to-ports 9040 -m comment --comment "OnionPi: Redirect all TCP packets to Tor's TransPort port."
+echo "Fixing firewall configuration.."
+iptables -F
+iptables -t nat -F
+iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j REDIRECT --to-ports 53 -m comment --comment "OnionPi: Redirect all DNS requests to Tor's DNSPort port."
+iptables -t nat -A PREROUTING -i wlan0 -p tcp --syn -j REDIRECT --to-ports 9040 -m comment --comment "OnionPi: Redirect all TCP packets to Tor's TransPort port."
 
-/bin/sh -c "/sbin/iptables-save > /etc/iptables.ipv4.nat"
+sh -c "iptables-save > /etc/iptables.ipv4.nat"
 
-/bin/echo "Wiping various  files and directories.."
-/usr/bin/shred -fvzu -n 3 /var/log/wtmp
-/usr/bin/shred -fvzu -n 3 /var/log/lastlog
-/usr/bin/shred -fvzu -n 3 /var/run/utmp
-/usr/bin/shred -fvzu -n 3 /var/log/mail.*
-/usr/bin/shred -fvzu -n 3 /var/log/syslog*
-/usr/bin/shred -fvzu -n 3 /var/log/messages*
-/usr/bin/shred -fvzu -n 3 /var/log/auth.log*
+echo "Wiping various  files and directories.."
+shred -fvzu -n 3 /var/log/wtmp
+shred -fvzu -n 3 /var/log/lastlog
+shred -fvzu -n 3 /var/run/utmp
+shred -fvzu -n 3 /var/log/mail.*
+shred -fvzu -n 3 /var/log/syslog*
+shred -fvzu -n 3 /var/log/messages*
+shred -fvzu -n 3 /var/log/auth.log*
 
-/bin/echo "Setting up logging in /var/log/tor/notices.log.."
-/usr/bin/touch /var/log/tor/notices.log
-/bin/chown debian-tor /var/log/tor/notices.log
-/bin/chmod 644 /var/log/tor/notices.log
+echo "Setting up logging in /var/log/tor/notices.log.."
+touch /var/log/tor/notices.log
+chown debian-tor /var/log/tor/notices.log
+chmod 644 /var/log/tor/notices.log
 
-/bin/echo "Setting tor to start at boot.."
-/usr/sbin/update-rc.d tor enable
+echo "Setting tor to start at boot.."
+update-rc.d tor enable
 
-/bin/echo "Setting up Monit to watch Tor process.."
+echo "Setting up Monit to watch Tor process.."
 /etc/monit/monitrc << 'tor_monit'
 check process tor with pidfile /var/run/tor/tor.pid
 group tor
@@ -122,15 +122,15 @@ if failed port 9050 type tcp
 if 3 restarts within 5 cycles then timeout
 tor_monit
 
-/bin/echo "Starting monit.."
-/usr/bin/monit quit
-/usr/bin/monit -c /etc/monit/monitrc
+echo "Starting monit.."
+monit quit
+monit -c /etc/monit/monitrc
 
-/bin/echo "Starting tor.."
-/usr/sbin/service tor start
+echo "Starting tor.."
+service tor start
 
-/usr/bin/clear
-/bin/echo "Onion Pi setup complete!
+clear
+echo "Onion Pi setup complete!
 To connect to your own Tor gateway, set your web browser or computer to connect to:
   Proxy type: SOCKSv5
   Port: 9050
