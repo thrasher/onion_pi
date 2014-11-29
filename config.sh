@@ -33,6 +33,7 @@ EOF
 }
 
 function setup_access_point {
+  # roughly follows: https://learn.adafruit.com/setting-up-a-raspberry-pi-as-a-wifi-access-point?view=all
   SSID=$2
   PSK=$3
   echo "Setting up Access Point, assuming wlan0 for WAN and wlan1 for LAN"
