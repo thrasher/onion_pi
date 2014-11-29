@@ -104,9 +104,8 @@ EOF
 
   echo "Configuring Network Address Translation"
   cp -ap /etc/sysctl.conf /etc/sysctl.conf.bak
-  cat >> /etc/sysctl.conf << EOF
-net.ipv4.ip_forward=1
-EOF
+  sed -i 's/^#net.ipv4.ip_forward=.*/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
+
   echo "Activating NAT immediately"
   sh -c "echo 1 > /proc/sys/net/ipv4/ip_forward"
 
@@ -132,14 +131,14 @@ EOF
   chown root:root hostapd
   mv hostapd /usr/sbin/hostapd
 
+  echo "Disabling WPASupplicant"
+  mv /usr/share/dbus-1/system-services/fi.epitest.hostap.WPASupplicant.service ~/
+
   echo "Setup DHCP and Access Point to start on boot"
   update-rc.d hostapd enable
   update-rc.d isc-dhcp-server enable
   service hostapd start
   service isc-dhcp-server start
-
-  echo "Disabling WPASupplicant"
-  mv /usr/share/dbus-1/system-services/fi.epitest.hostap.WPASupplicant.service ~/
 
   echo "Reboot your Raspberry Pi to see if your AP works!"
 }
