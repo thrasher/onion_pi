@@ -40,6 +40,17 @@ cat <<'Onion_Pi'
                   /  /    \
 Onion_Pi
 
+function clean {
+  echo "Removing Wolfram Alpha Enginer due to bug. More info:
+  http://www.raspberrypi.org/phpBB3/viewtopic.php?f=66&t=68263"
+  apt-get remove -y wolfram-engine
+  # ntp unattended-upgrades monit
+}
+
+function install {
+# check if tor is already installed and customized
+[ -e /etc/tor/torrc.bak ] && exit 1
+
 echo "This script will auto-setup a Tor proxy for you. It is recommend that you
 run this script on a fresh installation of Raspbian."
 read -p "Press [Enter] key to begin.."
@@ -47,24 +58,26 @@ read -p "Press [Enter] key to begin.."
 echo "Updating package index.."
 apt-get update -y
 
-echo "Removing Wolfram Alpha Enginer due to bug. More info:
-http://www.raspberrypi.org/phpBB3/viewtopic.php?f=66&t=68263"
-apt-get remove -y wolfram-engine
-
 echo "Updating out-of-date packages.."
 apt-get upgrade -y
 
 echo "Downloading and installing various packages.."
-apt-get install -y ntp unattended-upgrades monit tor 
+apt-get install -y tor
+service tor stop
 
 echo "Configuring Tor.."
-cat /dev/null > /etc/tor/torrc
-/etc/tor/torrc <<'onion_pi_configuration'
+cp -ap /etc/tor/torrc /etc/tor/torrc.bak
+cat >> /etc/tor/torrc << 'onion_pi_configuration'
 ## Onion Pi Config v0.3
 ## More information: https://github.com/breadtk/onion_pi/
 
+# Configure proxy server service for a network of computers
+VirtualAddrNetwork 10.192.0.0/10
+
 # Transparent proxy port
 TransPort 9040
+TransListenAddress 192.168.42.1
+
 # Explicit SOCKS port for applications.
 SocksPort 9050
 
@@ -83,17 +96,22 @@ AutomapHostsOnResolve 1
 
 # Serve DNS responses
 DNSPort 53
+DNSListenAddress 192.168.42.1
 onion_pi_configuration
 
 echo "Fixing firewall configuration.."
 iptables -F
 iptables -t nat -F
+iptables -t nat -A PREROUTING -i wlan0 -p tcp --dport 22 -j REDIRECT --to-ports 22 -m comment --comment "Allow SSH to Raspberry Pi"
 iptables -t nat -A PREROUTING -i wlan0 -p udp --dport 53 -j REDIRECT --to-ports 53 -m comment --comment "OnionPi: Redirect all DNS requests to Tor's DNSPort port."
 iptables -t nat -A PREROUTING -i wlan0 -p tcp --syn -j REDIRECT --to-ports 9040 -m comment --comment "OnionPi: Redirect all TCP packets to Tor's TransPort port."
 
+echo "These are the iptables"
+iptables -t nat -L
+
 sh -c "iptables-save > /etc/iptables.ipv4.nat"
 
-echo "Wiping various  files and directories.."
+echo "Wiping various files and directories.."
 shred -fvzu -n 3 /var/log/wtmp
 shred -fvzu -n 3 /var/log/lastlog
 shred -fvzu -n 3 /var/run/utmp
@@ -111,7 +129,9 @@ echo "Setting tor to start at boot.."
 update-rc.d tor enable
 
 echo "Setting up Monit to watch Tor process.."
-/etc/monit/monitrc << 'tor_monit'
+apt-get install -y monit
+cp -ap /etc/monit/monitrc /etc/monit/monitrc.bak
+cat >> /etc/monit/monitrc << 'tor_monit'
 check process tor with pidfile /var/run/tor/tor.pid
 group tor
 start program = "/etc/init.d/tor start"
@@ -129,7 +149,7 @@ monit -c /etc/monit/monitrc
 echo "Starting tor.."
 service tor start
 
-clear
+#clear
 echo "Onion Pi setup complete!
 To connect to your own Tor gateway, set your web browser or computer to connect to:
   Proxy type: SOCKSv5
@@ -144,5 +164,17 @@ Before doing anything, verify that you are using the Tor network by visiting:
 
 Onion Pi
 "
+}
 
-exit
+case "$1" in
+  clean)
+    clean
+    ;;
+  install)
+    install
+    ;;
+  *)
+    echo "Usage: $0 { clean | install }"
+    exit 1
+esac
+exit 0
