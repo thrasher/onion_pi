@@ -183,6 +183,12 @@ Before doing anything, verify that you are using the Tor network by visiting:
 
 Onion Pi
 "
+
+# check that tor is working
+curl -s "https://check.torproject.org/" > tor-check.txt
+grep "This browser is configured to use Tor" tor-check.txt
+grep "Sorry. You are not using Tor." tor-check.txt
+
 }
 
 case "$1" in
