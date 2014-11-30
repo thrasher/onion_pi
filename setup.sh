@@ -47,8 +47,8 @@ function clean {
   # ntp unattended-upgrades monit
 
   # fix locale issue
-  sed -i s/en_GB/en_US/g /etc/default/locale
-  dpkg-reconfigure locales
+  #sed -i s/en_GB/en_US/g /etc/default/locale
+  #dpkg-reconfigure locales
 }
 
 function install {
