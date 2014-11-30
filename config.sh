@@ -83,7 +83,7 @@ EOF
   ifconfig wlan1 192.168.42.1
 
   echo "Setup WiFi Access Point LAN"
-  echo > /etc/hostapd/hostapd.conf << EOF
+  cat > /etc/hostapd/hostapd.conf << EOF
 interface=wlan1
 driver=rtl871xdrv
 ssid=OnionPi
@@ -129,7 +129,17 @@ EOF
   curl https://raw.githubusercontent.com/thrasher/onion_pi/master/hostapd -O
   chmod 755 hostapd
   chown root:root hostapd
-  mv hostapd /usr/sbin/hostapd
+  #mv hostapd /usr/sbin/hostapd
+  curl 'ftp://WebUser:n8W9ErCy@209.222.7.36/cn/wlan/RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'Referer: http://www.realtek.com.tw/downloads/RedirectFTPSite.aspx?SiteID=6&DownTypeID=3&DownID=919&PFid=48&Conn=4&FTPPath=ftp%3a%2f%2f209.222.7.36%2fcn%2fwlan%2fRTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36' --compressed -O
+  unzip RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip
+  cd RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911/wpa_supplicant_hostapd
+  tar -xvf wpa_supplicant_hostapd-0.8_rtw_r7475.20130812.tar.gz
+  cd wpa_supplicant_hostapd-0.8_rtw_r7475.20130812/hostapd
+  make && make install
+
+  sudo mv hostapd /usr/sbin/hostapd
+  sudo chown root.root /usr/sbin/hostapd
+  sudo chmod 755 /usr/sbin/hostapd
 
   echo "Disabling WPASupplicant"
   mv /usr/share/dbus-1/system-services/fi.epitest.hostap.WPASupplicant.service ~/
