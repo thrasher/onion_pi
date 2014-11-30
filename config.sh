@@ -58,8 +58,9 @@ EOF
 
 function setup_access_point {
   # roughly follows: https://learn.adafruit.com/setting-up-a-raspberry-pi-as-a-wifi-access-point?view=all
-  SSID=$2
-  PSK=$3
+  SSID=$1
+  PSK=$2
+  echo "Setup default WAN connection to ssid=$SSID psk=$PSK"
   echo "Setting up Access Point, assuming wlan0 for WAN and wlan1 for LAN"
   apt-get install -y hostapd isc-dhcp-server
   cp -ap /etc/dhcp/dhcpd.conf /etc/dhcp/dhcpd.conf.bak
@@ -191,7 +192,7 @@ case "$1" in
     install_node
     ;;
   setup_access_point)
-    setup_access_point
+    setup_access_point $2 $3
     ;;
   *)
     echo "Usage: $0 { create_sd_card | update | install_node | setup_access_point [SSID] [PSK] }"
