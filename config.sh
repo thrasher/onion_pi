@@ -2,10 +2,34 @@
 
 # expand the filesystem
 # set pi user password
-# change locale to en_US (uncheck (en_GB)
+# change locale to en_US (uncheck en_GB)
+# do not set timezone, leave as GMT
 # advanced : enable ssh
+# reboot cleanly, so filesystems are properly unmounted
+# verify filesystems were resized, that there are no boot error messages
+# reboot cleanly once more before proceeding
+
+function create_sd_card {
+  echo "Creating an SD card is too dangerous to do from a script, so just read and execute the commands yourself in terminal"
+  exit 0
+  curl -L http://downloads.raspberrypi.org/raspbian/images/raspbian-2014-09-12/2014-09-09-wheezy-raspbian.zip -O
+  unzip 2014-09-09-wheezy-raspbian.zip
+  diskutil list disk2
+  diskutil unmountDisk disk2
+  # Note: on OSX, using an of=/dev/rdiskXXX (with 'r' prefix) will give 10x the write speed, which can be monitored with Ctrl-T
+  sudo dd bs=1m if=2014-09-09-wheezy-raspbian.img of=/dev/disk2
+}
 
 function update {
+  echo "Removing Wolfram Alpha Enginer due to bug. More info:
+  http://www.raspberrypi.org/phpBB3/viewtopic.php?f=66&t=68263"
+  apt-get remove -y wolfram-engine
+  # unattended-upgrades monit
+
+  # fix locale issue
+  #sed -i s/en_GB/en_US/g /etc/default/locale
+  #dpkg-reconfigure locales
+
   apt-get -y update
   apt-get -y upgrade
 }
@@ -126,20 +150,23 @@ EOF
 
   echo "Downloading and installing hostapd for Realtek Semiconductor Corp. RTL8188CUS 802.11n WLAN Adapter"
   mv /usr/sbin/hostapd /usr/sbin/hostapd.bak
-  curl https://raw.githubusercontent.com/thrasher/onion_pi/master/hostapd -O
-  chmod 755 hostapd
-  chown root:root hostapd
-  #mv hostapd /usr/sbin/hostapd
-  curl 'ftp://WebUser:n8W9ErCy@209.222.7.36/cn/wlan/RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'Referer: http://www.realtek.com.tw/downloads/RedirectFTPSite.aspx?SiteID=6&DownTypeID=3&DownID=919&PFid=48&Conn=4&FTPPath=ftp%3a%2f%2f209.222.7.36%2fcn%2fwlan%2fRTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36' --compressed -O
-  unzip RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip
-  cd RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911/wpa_supplicant_hostapd
-  tar -xvf wpa_supplicant_hostapd-0.8_rtw_r7475.20130812.tar.gz
-  cd wpa_supplicant_hostapd-0.8_rtw_r7475.20130812/hostapd
-  make && make install
+  mv /usr/sbin/hostapd_cli /usr/sbin/hostapd_cli.bak
+  curl https://raw.githubusercontent.com/thrasher/onion_pi/master/hostapd -o /usr/sbin/hostapd
+  curl https://raw.githubusercontent.com/thrasher/onion_pi/master/hostapd_cli -o /usr/sbin/hostapd_cli
 
-  sudo mv hostapd /usr/sbin/hostapd
-  sudo chown root.root /usr/sbin/hostapd
-  sudo chmod 755 /usr/sbin/hostapd
+  # echo "Building hostapd from sources for the RTL8188 chip"
+  #curl 'ftp://WebUser:n8W9ErCy@209.222.7.36/cn/wlan/RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'Referer: http://www.realtek.com.tw/downloads/RedirectFTPSite.aspx?SiteID=6&DownTypeID=3&DownID=919&PFid=48&Conn=4&FTPPath=ftp%3a%2f%2f209.222.7.36%2fcn%2fwlan%2fRTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36' --compressed -O
+  #unzip RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip
+  #cd RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911/wpa_supplicant_hostapd
+  #tar -xvf wpa_supplicant_hostapd-0.8_rtw_r7475.20130812.tar.gz
+  #cd wpa_supplicant_hostapd-0.8_rtw_r7475.20130812/hostapd
+  #make && make install
+
+  #sudo mv hostapd /usr/sbin/hostapd
+  #sudo mv hostapd_cli /usr/sbin/hostapd_cli
+
+  sudo chown root.root /usr/sbin/hostapd /usr/sbin/hostapd_cli
+  sudo chmod 755 /usr/sbin/hostapd /usr/sbin/hostapd_cli
 
   echo "Disabling WPASupplicant"
   mv /usr/share/dbus-1/system-services/fi.epitest.hostap.WPASupplicant.service ~/
@@ -154,6 +181,9 @@ EOF
 }
 
 case "$1" in
+  create_sd_card)
+    create_sd_card
+    ;;
   update)
     update
     ;;
@@ -164,7 +194,7 @@ case "$1" in
     setup_access_point
     ;;
   *)
-    echo "Usage: $0 { update | install_node | setup_access_point [SSID] [PSK] }"
+    echo "Usage: $0 { create_sd_card | update | install_node | setup_access_point [SSID] [PSK] }"
     exit 1
 esac
 
