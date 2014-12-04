@@ -2,7 +2,7 @@
 # Address to send ads to (the RPi)
 piholeIP="192.168.42.1"
 # Config file to hold URL rules
-eventHorizion="/etc/dnsmasq.d/dnsmasq.adlist.conf"
+eventHorizion="/tmp/dnsmasq.adlist.conf"
 
 # Download the original URL to a text file for easier parsing
 echo "Getting yoyo ad list..."
@@ -39,8 +39,10 @@ while read fermion
 do
 	boson=$(echo "$fermion" | tr -d '\r')
 	echo "address=/$boson/$piholeIP" >> $eventHorizion
-	echo "Added $boson..."
+	#echo "Added $boson..."
 done </tmp/andLight.txt
+
+mv /tmp/dnsmasq.adlist.conf /etc/dnsmasq.d/dnsmasq.adlist.conf
 
 # Restart DNS
 service dnsmasq restart
