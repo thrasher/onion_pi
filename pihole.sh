@@ -34,11 +34,18 @@ nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
 
+  update-rc.d dnsmasq enable
+
+  echo "Setup weekly cron to update ad-hosts"
+  cp dnsmasq.adlist.sh /etc/cron.weekly/.
+  /etc/cron.weekly/dnsmasq.adlist.sh
+
   echo "restart DNSMasq to pickup new config"
   service dnsmasq restart
 
-  update-rc.d dnsmasq enable
+  echo "test on a few domains"
   dig adafruit.com
+  dig doubleclick.net
 }
 
 dnshole
