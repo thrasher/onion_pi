@@ -45,10 +45,11 @@ function create_sd_card {
   exit 0
   curl -L http://downloads.raspberrypi.org/raspbian/images/raspbian-2014-09-12/2014-09-09-wheezy-raspbian.zip -O
   unzip 2014-09-09-wheezy-raspbian.zip
-  diskutil list disk2
+  diskutil list
   diskutil unmountDisk disk2
   # Note: on OSX, using an of=/dev/rdiskXXX (with 'r' prefix) will give 10x the write speed, which can be monitored with Ctrl-T
-  sudo dd bs=1m if=2014-09-09-wheezy-raspbian.img of=/dev/disk2
+  sudo dd bs=1m if=2014-09-09-wheezy-raspbian.img of=/dev/rdisk2
+  sudo diskutil eject /dev/rdisk2
 }
 
 # expand the filesystem
