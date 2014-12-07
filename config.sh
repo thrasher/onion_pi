@@ -32,7 +32,7 @@ function update {
 
   apt-get -y update
   apt-get -y upgrade
-  apt-get -t install screen
+  apt-get -y install screen
 }
 
 function install_node {
