@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
 # names of latest versions of each package
-export VERSION_PCRE=pcre-8.36
-export VERSION_OPENSSL=openssl-1.0.1j
-export VERSION_NGINX=nginx-1.7.8
+VERSION_PCRE=pcre-8.36
+VERSION_OPENSSL=openssl-1.0.1j
+VERSION_NGINX=nginx-1.7.8
 
 # URLs to the source directories
-export SOURCE_OPENSSL=https://www.openssl.org/source/
-export SOURCE_PCRE=ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/
-export SOURCE_NGINX=http://nginx.org/download/
+SOURCE_OPENSSL=https://www.openssl.org/source/
+SOURCE_PCRE=ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/
+SOURCE_NGINX=http://nginx.org/download/
 
 # clean out any files from previous runs of this script
 rm -rf build
@@ -30,8 +30,8 @@ tar xzf $VERSION_PCRE.tar.gz
 cd ../
 
 # set where OpenSSL and nginx will be built
-export BPATH=$(pwd)/build
-export STATICLIBSSL="$BPATH/staticlibssl"
+BPATH=$(pwd)/build
+STATICLIBSSL="$BPATH/staticlibssl"
 
 # build static openssl
 cd $BPATH/$VERSION_OPENSSL
@@ -42,9 +42,6 @@ make clean
 && make depend \
 && make \
 && make install_sw
-
-# rename the existing /etc/nginx directory so it's saved as a back-up
-mv /etc/nginx /etc/nginx-bk
 
 # build nginx, with various modules included/excluded
 cd $BPATH/$VERSION_NGINX
@@ -68,14 +65,4 @@ mkdir -p $BPATH/nginx
 --without-mail_imap_module \
 && make && make install
 
-# rename the compiled /etc/nginx directory so its accessible as a reference to the new nginx defaults
-mv /etc/nginx /etc/nginx-default
-
-# now restore the /etc/nginx-bk to /etc/nginx so the old settings are kept
-mv /etc/nginx-bk /etc/nginx
-
 echo "All done.";
-echo "This build has not edited your existing /etc/nginx directory.";
-echo "If things aren't working now you may need to refer to the";
-echo "configuration files the new nginx ships with as defaults,";
-echo "which are available at /etc/nginx-default";
