@@ -92,9 +92,9 @@ function build_all {
   echo "Building external binaries"
 
   DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-  sh $DIR/build-hostapd-rtl9199.sh
+  sh $DIR/build-hostapd.sh
   sh $DIR/build-nginx.sh
-  sh $DIR/build-node-arm.sh
+  sh $DIR/build-node.sh
 
   echo "Picking up nginx config files, the sloppy way"
   #apt-get -y install nginx
