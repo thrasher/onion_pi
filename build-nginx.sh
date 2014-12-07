@@ -33,6 +33,14 @@ cd ../
 BPATH=$(pwd)/build
 STATICLIBSSL="$BPATH/staticlibssl"
 
+# optional: make pcre, and install
+cd $BPATH/$VERSION_PCRE
+sudo apt-get -y install zip
+./configure --enable-pcre16 --enable-pcre32 --enable-jit --enable-utf --enable-unicode-properties && make
+# should install to /usr/local
+sudo make install
+#make distcheck
+
 # build static openssl
 cd $BPATH/$VERSION_OPENSSL
 rm -rf "$STATICLIBSSL"
