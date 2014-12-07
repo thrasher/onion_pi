@@ -31,15 +31,16 @@ cd ../
 
 # set where OpenSSL and nginx will be built
 BPATH=$(pwd)/build
-STATICLIBSSL="$BPATH/staticlibssl"
+STATICLIBSSL="/usr/local/staticlibssl"
 
 # optional: make pcre, and install
-cd $BPATH/$VERSION_PCRE
-sudo apt-get -y install zip
-./configure --enable-pcre16 --enable-pcre32 --enable-jit --enable-utf --enable-unicode-properties && make
+#cd $BPATH/$VERSION_PCRE
+#sudo apt-get -y install zip
+#./configure --enable-pcre16 --enable-pcre32 --enable-jit --enable-utf --enable-unicode-properties && make
 # should install to /usr/local
-sudo make install
+#sudo make install
 #make distcheck
+cp -rp $BPATH/$VERSION_PCRE /usr/local
 
 # build static openssl
 cd $BPATH/$VERSION_OPENSSL
@@ -61,7 +62,7 @@ mkdir -p $BPATH/nginx
 --pid-path=/var/run/nginx.pid \
 --error-log-path=/var/log/nginx/error.log \
 --http-log-path=/var/log/nginx/access.log \
---with-pcre=$BPATH/$VERSION_PCRE \
+--with-pcre=/usr/local/$VERSION_PCRE \
 --with-http_ssl_module \
 --with-http_spdy_module \
 --with-file-aio \
