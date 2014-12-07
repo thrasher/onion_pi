@@ -18,8 +18,7 @@ cd wpa_supplicant_hostapd-0.8_rtw_r7475.20130812/hostapd
 make
 
 echo "installing hostapd manually, as the makefile has the wrong path for raspberry pi"
-cd $PWD
-sudo cp RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911/wpa_supplicant_hostapd/wpa_supplicant_hostapd-0.8_rtw_r7475.20130812/hostapd/hostapd /usr/sbin/hostapd
-sudo cp RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911/wpa_supplicant_hostapd/wpa_supplicant_hostapd-0.8_rtw_r7475.20130812/hostapd/hostapd_cli /usr/sbin/hostapd_cli
+sudo cp hostapd /usr/sbin/hostapd
+sudo cp hostapd_cli /usr/sbin/hostapd_cli
 
 echo "Done!"
