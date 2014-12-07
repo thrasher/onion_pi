@@ -93,6 +93,9 @@ function build_all {
   echo "Building external binaries"
 
   DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+  echo "Installing hostapd"
+  apt-get -y install hostapd
   sh $DIR/build-hostapd.sh
 
   echo "Picking up nginx config files, the sloppy way"
@@ -139,7 +142,8 @@ function setup_access_point {
   PSK=$2
   echo "Setup default WAN connection to ssid=$SSID psk=$PSK"
   echo "Setting up Access Point, assuming wlan0 for WAN and wlan1 for LAN"
-  apt-get install -y hostapd isc-dhcp-server
+  #apt-get install -y hostapd
+  apt-get install -y isc-dhcp-server
   cp -ap /etc/dhcp/dhcpd.conf /etc/dhcp/dhcpd.conf.bak
   echo "Configuring DHCP server in /etc/dhcp/dhcpd.conf"
   sed -i 's/^\(option.*example.org.*\)/#\1/g' /etc/dhcp/dhcpd.conf
