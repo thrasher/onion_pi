@@ -94,21 +94,21 @@ function build_all {
 
   DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
   sh $DIR/build-hostapd.sh
-  sh $DIR/build-nginx.sh
-  sh $DIR/build-node.sh
 
   echo "Picking up nginx config files, the sloppy way"
-  #apt-get -y install nginx
-  #apt-get -y remove nginx
+  apt-get -y install nginx
+  apt-get -y autoremove nginx
+  mv /etc/nginx /etc/nginx-old
+  sh $DIR/build-nginx.sh
   #cp -rp nginx /etc
   #chown -R root:root /etc/nginx
 
   echo "Configure node"
+  sh $DIR/build-node.sh
   sudo tar -xvf node-v0.10.33-linux-arm-pi.tar.gz -C /usr/local
   sudo ln -s /usr/local/node-v0.10.33-linux-arm-pi /usr/local/node
   ln -s /usr/local/node/bin/node /usr/sbin/node
   ln -s /usr/local/node/bin/npm /usr/sbin/npm
-
 }
 
 function install_node {
