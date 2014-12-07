@@ -40,26 +40,6 @@ cat <<'Onion_Pi'
                   /  /    \
 Onion_Pi
 
-function clean {
-  echo "Removing Wolfram Alpha Enginer due to bug. More info:
-  http://www.raspberrypi.org/phpBB3/viewtopic.php?f=66&t=68263"
-  apt-get remove -y wolfram-engine
-  # ntp unattended-upgrades monit
-
-  # fix locale issue
-  #sed -i s/en_GB/en_US/g /etc/default/locale
-  #dpkg-reconfigure locales
-}
-
-# expand the filesystem
-# set pi user password
-# change locale to en_US (uncheck en_GB)
-# do not set timezone, leave as GMT
-# advanced : enable ssh
-# reboot cleanly, so filesystems are properly unmounted
-# verify filesystems were resized, that there are no boot error messages
-# reboot cleanly once more before proceeding
-
 function create_sd_card {
   echo "Creating an SD card is too dangerous to do from a script, so just read and execute the commands yourself in terminal"
   exit 0
@@ -71,11 +51,19 @@ function create_sd_card {
   sudo dd bs=1m if=2014-09-09-wheezy-raspbian.img of=/dev/disk2
 }
 
-function update {
+# expand the filesystem
+# set pi user password
+# change locale to en_US (uncheck en_GB)
+# do not set timezone, leave as GMT
+# advanced : enable ssh
+# reboot cleanly, so filesystems are properly unmounted
+# verify filesystems were resized, that there are no boot error messages
+# reboot cleanly once more before proceeding
+
+function clean {
   echo "Removing Wolfram Alpha Enginer due to bug. More info:
   http://www.raspberrypi.org/phpBB3/viewtopic.php?f=66&t=68263"
   apt-get remove -y wolfram-engine
-  # unattended-upgrades monit
 
   # fix locale issue
   #sed -i s/en_GB/en_US/g /etc/default/locale
@@ -83,12 +71,43 @@ function update {
 
   apt-get -y update
   apt-get -y upgrade
-  apt-get -y install screen curl wget monit build-essential dnsmasq dnsutils tor
+  apt-get -y install vim screen curl wget ntp monit build-essential dnsmasq dnsutils tor unattended-upgrades
+
+  echo "Setting up unattended upgrades, note that we're not configuring for auto-reboot, but some updates may need it"
+  #dpkg-reconfigure -plow unattended-upgrades
+  cat > /etc/apt/apt.conf.d/20auto-upgrades << EOF
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+EOF
 
   # additional config
   #echo "Turning swap off, to reduce writes to the SD Card"
   #sudo dphys-swapfile swapoff
-  
+
+  # Set name of pi user
+  chfn -f "OnionPi" pi
+}
+
+function build_all {
+  echo "Building external binaries"
+
+  DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+  sh $DIR/build-hostapd-rtl9199.sh
+  sh $DIR/build-nginx.sh
+  sh $DIR/build-node-arm.sh
+
+  echo "Picking up nginx config files, the sloppy way"
+  #apt-get -y install nginx
+  #apt-get -y remove nginx
+  #cp -rp nginx /etc
+  #chown -R root:root /etc/nginx
+
+  echo "Configure node"
+  sudo tar -xvf node-v0.10.33-linux-arm-pi.tar.gz -C /usr/local
+  sudo ln -s /usr/local/node-v0.10.33-linux-arm-pi /usr/local/node
+  ln -s /usr/local/node/bin/node /usr/sbin/node
+  ln -s /usr/local/node/bin/npm /usr/sbin/npm
+
 }
 
 function install_node {
@@ -212,17 +231,6 @@ EOF
   curl https://raw.githubusercontent.com/thrasher/onion_pi/master/hostapd -o /usr/sbin/hostapd
   curl https://raw.githubusercontent.com/thrasher/onion_pi/master/hostapd_cli -o /usr/sbin/hostapd_cli
 
-  # echo "Building hostapd from sources for the RTL8188 chip"
-  #curl 'ftp://WebUser:n8W9ErCy@209.222.7.36/cn/wlan/RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip' -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8' -H 'Referer: http://www.realtek.com.tw/downloads/RedirectFTPSite.aspx?SiteID=6&DownTypeID=3&DownID=919&PFid=48&Conn=4&FTPPath=ftp%3a%2f%2f209.222.7.36%2fcn%2fwlan%2fRTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip' -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36' --compressed -O
-  #unzip RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911.zip
-  #cd RTL8188C_8192C_USB_linux_v4.0.2_9000.20130911/wpa_supplicant_hostapd
-  #tar -xvf wpa_supplicant_hostapd-0.8_rtw_r7475.20130812.tar.gz
-  #cd wpa_supplicant_hostapd-0.8_rtw_r7475.20130812/hostapd
-  #make && make install
-
-  #sudo mv hostapd /usr/sbin/hostapd
-  #sudo mv hostapd_cli /usr/sbin/hostapd_cli
-
   sudo chown root.root /usr/sbin/hostapd /usr/sbin/hostapd_cli
   sudo chmod 755 /usr/sbin/hostapd /usr/sbin/hostapd_cli
 
@@ -239,21 +247,7 @@ EOF
 }
 
 function install_tor {
-# check if tor is already installed and customized
-if [ -e /etc/tor/torrc.bak ] ; then
-  echo "It appears that tor has already been configured in /etc/tor/torrc, so quitting"
-  exit 1
-fi
-
-echo "This script will auto-setup a Tor proxy for you. It is recommend that you
-run this script on a fresh installation of Raspbian."
-read -p "Press [Enter] key to begin.."
-
-echo "Updating package index.."
-apt-get update -y
-
-echo "Updating out-of-date packages.."
-apt-get upgrade -y
+read -p "Press [Enter] key to install tor"
 
 echo "Downloading and installing various packages.."
 apt-get install -y tor
@@ -289,43 +283,18 @@ AutomapHostsSuffixes .onion,.exit
 AutomapHostsOnResolve 1
 
 # Serve DNS responses
-DNSPort 53
+DNSPort 9053
 DNSListenAddress 192.168.42.1
 onion_pi_configuration
 
-echo "Fixing firewall configuration.."
-iptables -F
-iptables -t nat -F
-iptables -t nat -A PREROUTING -i wlan1 -p tcp --dport 22 -j REDIRECT --to-ports 22 -m comment --comment "Allow SSH to Raspberry Pi"
-iptables -t nat -A PREROUTING -i wlan1 -p tcp --dport 80  --source 192.168.0.0/16 --destination 192.168.42.1 -j REDIRECT --to-ports 80 -m comment --comment "Redirect ads to local nginx"
-iptables -t nat -A PREROUTING -i wlan1 -p udp --dport 53 -j REDIRECT --to-ports 53 -m comment --comment "OnionPi: Redirect all DNS requests to local DNS server (DNSMasq or Tor's DNSPort)."
-iptables -t nat -A PREROUTING -i wlan1 -p tcp --syn -j REDIRECT --to-ports 9040 -m comment --comment "OnionPi: Redirect all TCP packets to Tor's TransPort port."
-
-echo "Fixing bug in firewall rules https://lists.torproject.org/pipermail/tor-talk/2014-March/032507.html"
-#iptables -A OUTPUT -m conntrack --ctstate INVALID -j LOG --log-prefix "Transproxy ctstate leak blocked: " --log-uid
-iptables -A OUTPUT -m conntrack --ctstate INVALID -j DROP
-#iptables -A OUTPUT -m state --state INVALID -j LOG --log-prefix "Transproxy state leak blocked: " --log-uid
-iptables -A OUTPUT -m state --state INVALID -j DROP
-
-#iptables -A OUTPUT ! -o lo ! -d 127.0.0.1 ! -s 127.0.0.1 -p tcp -m tcp --tcp-flags ACK,FIN ACK,FIN -j LOG --log-prefix "Transproxy leak blocked: " --log-uid
-#iptables -A OUTPUT ! -o lo ! -d 127.0.0.1 ! -s 127.0.0.1 -p tcp -m tcp --tcp-flags ACK,RST ACK,RST -j LOG --log-prefix "Transproxy leak blocked: " --log-uid
-iptables -A OUTPUT ! -o lo ! -d 127.0.0.1 ! -s 127.0.0.1 -p tcp -m tcp --tcp-flags ACK,FIN ACK,FIN -j DROP
-iptables -A OUTPUT ! -o lo ! -d 127.0.0.1 ! -s 127.0.0.1 -p tcp -m tcp --tcp-flags ACK,RST ACK,RST -j DROP
-
-echo "These are the iptables"
-iptables -t nat -L -v
-iptables -L -v
-
-sh -c "iptables-save > /etc/iptables.ipv4.nat"
-
 echo "Wiping various files and directories.."
-shred -fvzu -n 3 /var/log/wtmp
-shred -fvzu -n 3 /var/log/lastlog
-shred -fvzu -n 3 /var/run/utmp
-shred -fvzu -n 3 /var/log/mail.*
-shred -fvzu -n 3 /var/log/syslog*
-shred -fvzu -n 3 /var/log/messages*
-shred -fvzu -n 3 /var/log/auth.log*
+#shred -fvzu -n 3 /var/log/wtmp
+#shred -fvzu -n 3 /var/log/lastlog
+#shred -fvzu -n 3 /var/run/utmp
+#shred -fvzu -n 3 /var/log/mail.*
+#shred -fvzu -n 3 /var/log/syslog*
+#shred -fvzu -n 3 /var/log/messages*
+#shred -fvzu -n 3 /var/log/auth.log*
 
 echo "Setting up logging in /var/log/tor/notices.log.."
 touch /var/log/tor/notices.log
@@ -356,31 +325,14 @@ monit -c /etc/monit/monitrc
 echo "Starting tor.."
 service tor start
 
-#clear
-echo "Onion Pi setup complete!
-To connect to your own Tor gateway, set your web browser or computer to connect to:
-  Proxy type: SOCKSv5
-  Port: 9050
-
-  Transparent proxy port: 9040
-
-Before doing anything, verify that you are using the Tor network by visiting:
-
-  https://check.torproject.org/
-
-
-Onion Pi
-"
-
 # check that tor is working
-curl -s "https://check.torproject.org/" > tor-check.txt
-grep "This browser is configured to use Tor" tor-check.txt
-grep "Sorry. You are not using Tor." tor-check.txt
-
+#curl -s "https://check.torproject.org/" > tor-check.txt
 }
 
-function dnshole {
+function install_dnsmasq {
+  read -p "Press [Enter] key to install DNSMasq"
   echo "Setting up DNSMasq"
+  service isc-dhcp-server stop
   sudo apt-get autoremove isc-dhcp-server
   sudo apt-get install -y dnsmasq dnsutils
 
@@ -432,14 +384,43 @@ EOF
   dig doubleclick.net
 }
 
+function config_iptables {
+  echo "Fixing firewall configuration... routing wlan1 to dnsmasq to tor's DNSPort, and Ads to nginx"
+  iptables -F
+  iptables -t nat -F
+  iptables -t nat -A PREROUTING -i wlan1 -p tcp --dport 22 -j REDIRECT --to-ports 22 -m comment --comment "Allow SSH to Raspberry Pi"
+  iptables -t nat -A PREROUTING -i wlan1 -p tcp --dport 80  --source 192.168.0.0/16 --destination 192.168.42.1 -j REDIRECT --to-ports 80 -m comment --comment "Redirect ads to local nginx"
+  iptables -t nat -A PREROUTING -i wlan1 -p udp --dport 53 -j REDIRECT --to-ports 53 -m comment --comment "OnionPi: Redirect all DNS requests to local DNS server (DNSMasq or Tor's DNSPort)."
+  iptables -t nat -A PREROUTING -i wlan1 -p tcp --syn -j REDIRECT --to-ports 9040 -m comment --comment "OnionPi: Redirect all TCP packets to Tor's TransPort port."
+  
+  echo "Fixing bug in firewall rules https://lists.torproject.org/pipermail/tor-talk/2014-March/032507.html"
+  #iptables -A OUTPUT -m conntrack --ctstate INVALID -j LOG --log-prefix "Transproxy ctstate leak blocked: " --log-uid
+  iptables -A OUTPUT -m conntrack --ctstate INVALID -j DROP
+  #iptables -A OUTPUT -m state --state INVALID -j LOG --log-prefix "Transproxy state leak blocked: " --log-uid
+  iptables -A OUTPUT -m state --state INVALID -j DROP
+  
+  #iptables -A OUTPUT ! -o lo ! -d 127.0.0.1 ! -s 127.0.0.1 -p tcp -m tcp --tcp-flags ACK,FIN ACK,FIN -j LOG --log-prefix "Transproxy leak blocked: " --log-uid
+  #iptables -A OUTPUT ! -o lo ! -d 127.0.0.1 ! -s 127.0.0.1 -p tcp -m tcp --tcp-flags ACK,RST ACK,RST -j LOG --log-prefix "Transproxy leak blocked: " --log-uid
+  iptables -A OUTPUT ! -o lo ! -d 127.0.0.1 ! -s 127.0.0.1 -p tcp -m tcp --tcp-flags ACK,FIN ACK,FIN -j DROP
+  iptables -A OUTPUT ! -o lo ! -d 127.0.0.1 ! -s 127.0.0.1 -p tcp -m tcp --tcp-flags ACK,RST ACK,RST -j DROP
+  
+  echo "These are the iptables"
+  iptables -t nat -L -v
+  iptables -L -v
+  
+  sh -c "iptables-save > /etc/iptables.ipv4.nat"
+}
+
 case "$1" in
   clean)
     clean
+    build_all
     ;;
   install)
     setup_access_point $2 $3
     install_tor
-    dnshole
+    install_dnsmasq
+    config_iptables
     ;;
   *)
     echo "Usage: $0 { clean | install [SSID] [PSK] }"
