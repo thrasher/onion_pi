@@ -294,7 +294,7 @@ EOF
 }
 
 function install_tor {
-read -p "Press [Enter] key to install tor"
+#read -p "Press [Enter] key to install tor"
 
 echo "Downloading and installing various packages.."
 apt-get install -y tor
@@ -377,10 +377,10 @@ service tor start
 }
 
 function install_dnsmasq {
-  read -p "Press [Enter] key to install DNSMasq"
+  #read -p "Press [Enter] key to install DNSMasq"
   echo "Setting up DNSMasq"
   service isc-dhcp-server stop
-  sudo apt-get autoremove isc-dhcp-server
+  sudo apt-get -y autoremove isc-dhcp-server
   sudo apt-get install -y dnsmasq dnsutils
 
   # see  /etc/dnsmasq.conf for more config options
