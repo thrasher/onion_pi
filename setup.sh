@@ -406,7 +406,7 @@ EOF
 
   echo "Setup weekly cron to update ad-hosts"
   cp dnsmasq.adlist.sh /etc/cron.weekly/.
-  sh /etc/cron.weekly/dnsmasq.adlist.sh
+  #sh /etc/cron.weekly/dnsmasq.adlist.sh
   cp adlist.conf /etc/dnsmasq.d
 
   echo "restart DNSMasq to pickup new config"
