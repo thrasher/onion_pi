@@ -397,9 +397,15 @@ EOF
 
   cp -ap /etc/resolv.conf /etc/resolv.conf.bak
   cat > /etc/resolv.conf << EOF
+nameserver 127.0.0.1
 nameserver 192.168.42.1
-#nameserver 8.8.8.8
-#nameserver 8.8.4.4
+EOF
+
+  echo "prevent loss of our DNS config from wlan0 by dhcp"
+  cp -ap /etc/dhcp/dhclient.conf /etc/dhcp/dhclient.conf.bak
+  cat >> /etc/dhcp/dhclient.conf << EOF
+supersede domain-name "onionpi";
+supersede domain-name-servers 127.0.0.1, 192.168.42.1;
 EOF
 
   update-rc.d dnsmasq enable
