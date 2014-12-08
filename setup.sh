@@ -103,7 +103,7 @@ function build_all {
   apt-get -y autoremove nginx
   mv /etc/nginx /etc/nginx-old
   sh $DIR/build-nginx.sh
-  #cp -rp nginx /etc
+  cp -r nginx /etc
   #chown -R root:root /etc/nginx
 
   echo "Configure node"
