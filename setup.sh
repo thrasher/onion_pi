@@ -50,6 +50,11 @@ function create_sd_card {
   # Note: on OSX, using an of=/dev/rdiskXXX (with 'r' prefix) will give 10x the write speed, which can be monitored with Ctrl-T
   sudo dd bs=1m if=2014-09-09-wheezy-raspbian.img of=/dev/rdisk2
   sudo diskutil eject /dev/rdisk2
+
+  # create a compressed image backup with:
+  dd if=/dev/rdisk2 | gzip > onionpi-8gb-sdcard.img.gz
+  # restore 
+  gzip -dc onionpi-8gb-sdcard.img.gz | dd of=/dev/rdisk2
 }
 
 # expand the filesystem
