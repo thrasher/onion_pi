@@ -455,6 +455,14 @@ function config_iptables {
   sh -c "iptables-save > /etc/iptables.ipv4.nat"
 }
 
+function setupnode() {
+  echo "continue setup of node"
+  cp node-service /etc/init.d
+  cp -rp www /var
+  chown -R www-data:www-data /var/www
+
+}
+
 case "$1" in
   clean)
     clean
