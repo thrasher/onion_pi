@@ -458,6 +458,9 @@ function config_iptables {
 function setupnode() {
   echo "continue setup of node"
   cp node-service /etc/init.d
+  chmod +x /etc/init.d/node-service
+  update-rc.d node-service start 2 3 4 5
+  update-rc.d node-service enable
   cp -rp www /var
   chown -R www-data:www-data /var/www
 
